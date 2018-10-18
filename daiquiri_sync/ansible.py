@@ -1,19 +1,16 @@
-import ConfigParser
-
-import os
+import configparser
 import subprocess
-import tempfile
-
 import yaml
 
 
 class Ansible():
 
-    def __init__(self, inventory_file):
+    def __init__(self, inventory_file, playbook_file):
         self.inventory_file = inventory_file
+        self.playbook_file = playbook_file
 
         # parse the ansible inventory file
-        config = ConfigParser.RawConfigParser(allow_no_value=True)
+        config = configparser.RawConfigParser(allow_no_value=True)
         config.read(inventory_file)
 
         # set the list of host_groups
@@ -39,13 +36,9 @@ class Ansible():
         playbook_yaml = yaml.dump([self.plays[host_group] for host_group in self.host_groups])
 
         # write the yaml into a (secure) temporary file
-        f, playbook_file = tempfile.mkstemp()
-        os.write(f, playbook_yaml)
-        os.close(f)
+        with open(self.playbook_file, 'w') as f:
+            f.write(playbook_yaml)
 
         # call ansible using a subprocess
-        args = ['ansible-playbook', '--inventory=%s' % self.inventory_file, playbook_file]
+        args = ['ansible-playbook', '--inventory=%s' % self.inventory_file, self.playbook_file]
         subprocess.call(args)
-
-        # remove the temporary playbook file
-        os.remove(playbook_file)

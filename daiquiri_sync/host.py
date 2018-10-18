@@ -26,7 +26,7 @@ class Host():
 
         # init the uid creation
         self.current_uid, self.max_uid = self.uid_range
-        self.uid_list = [user['uid'] for user in self.users]
+        self.uid_list = [u['uid'] for u in self.users]
 
     def create_uid(self):
         while self.current_uid < self.max_uid - 1:
@@ -40,15 +40,16 @@ class Host():
         stdin, stdout, stderr = self.client.exec_command('cat /etc/passwd')
 
         passwd = []
-        for row in csv.reader(io.BytesIO(stdout.read()), delimiter=':', quoting=csv.QUOTE_NONE):
-            passwd.append({
-                'name': row[0],
-                'uid': int(row[2]),
-                'gid': int(row[3]),
-                'comment': row[4],
-                'home': row[5],
-                'shell': row[6]
-            })
+        for row in csv.reader(stdout.read().decode().split('\n'), delimiter=':', quoting=csv.QUOTE_NONE):
+            if row:
+                passwd.append({
+                    'name': row[0],
+                    'uid': int(row[2]),
+                    'gid': int(row[3]),
+                    'comment': row[4],
+                    'home': row[5],
+                    'shell': row[6]
+                })
 
         return passwd
 
@@ -56,11 +57,12 @@ class Host():
         stdin, stdout, stderr = self.client.exec_command('cat /etc/group')
 
         groups = []
-        for row in csv.reader(io.BytesIO(stdout.read()), delimiter=':', quoting=csv.QUOTE_NONE):
-            groups.append({
-                'name': row[0],
-                'gid': int(row[2]),
-                'users': row[3].split(',') if row[3] else []
-            })
+        for row in csv.reader(stdout.read().decode().split('\n'), delimiter=':', quoting=csv.QUOTE_NONE):
+            if row:
+                groups.append({
+                    'name': row[0],
+                    'gid': int(row[2]),
+                    'users': row[3].split(',') if row[3] else []
+                })
 
         return groups
