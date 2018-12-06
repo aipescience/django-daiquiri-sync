@@ -31,7 +31,7 @@ class Ansible():
                 'tasks': []
             }
 
-    def play(self):
+    def play(self, dry=False):
         # convert the plays dict to a yaml, but preserving the order of host_groups
         playbook_yaml = yaml.dump([self.plays[host_group] for host_group in self.host_groups])
 
@@ -41,4 +41,9 @@ class Ansible():
 
         # call ansible using a subprocess
         args = ['ansible-playbook', '--inventory=%s' % self.inventory_file, self.playbook_file]
-        subprocess.call(args)
+
+        if dry:
+            print(' '.join(args))
+        else:
+            subprocess.call(args)
+
