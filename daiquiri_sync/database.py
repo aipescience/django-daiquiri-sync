@@ -23,5 +23,7 @@ class Database():
             # skip non sha512 hashes
             if password_hash.startswith('crypt_sha512$6$'):
                 password_map[username] = password_hash.replace('crypt_sha512$6$', '$6$')
+            else:
+                password_map[username] = None
 
         return password_map
