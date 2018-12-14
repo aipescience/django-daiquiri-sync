@@ -21,6 +21,9 @@ class Ansible():
         for host_group in self.host_groups:
             self.hosts[host_group] = [name for name, _ in config.items(host_group)]
 
+        # get the head node
+        self.head_node = self.hosts[self.host_groups[0]][0]
+
         # initialize the plays dict, seperated by host_group
         self.plays = {}
         for host_group in self.host_groups:
@@ -31,9 +34,19 @@ class Ansible():
                 'tasks': []
             }
 
+        # add a play for the head_node
+        self.plays[self.head_node] = {
+            'name': 'Sync %s' % self.head_node,
+            'hosts': self.head_node,
+            'remote_user': 'root',
+            'tasks': []
+        }
+
+
     def play(self, dry=False):
         # convert the plays dict to a yaml, but preserving the order of host_groups
-        playbook_yaml = yaml.dump([self.plays[host_group] for host_group in self.host_groups])
+        plays = [self.plays[hosts] for hosts in self.host_groups + [self.head_node]]
+        playbook_yaml = yaml.dump(plays)
 
         # write the yaml into a (secure) temporary file
         with open(self.playbook_file, 'w') as f:
@@ -43,7 +56,6 @@ class Ansible():
         args = ['ansible-playbook', '--inventory=%s' % self.inventory_file, self.playbook_file]
 
         if dry:
-            print(' '.join(args))
+            subprocess.call(args + ['--check'])
         else:
             subprocess.call(args)
-
